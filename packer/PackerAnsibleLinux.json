@@ -1,0 +1,40 @@
+{
+  "builders": [{
+    "type": "azure-arm",
+
+    "client_id": "b31e2f38-061a-47c9-b3fe-23319b6281fd",
+    "client_secret": "xxxx",
+    "tenant_id": "8cb22c49-70bc-45b0-9fdf-7a529cd86ea1",
+    "subscription_id": "9dc6b762-c8ca-4625-bcca-14f73ae7f41c",
+
+    "managed_image_resource_group_name": "Test",
+    "managed_image_name": "AnsibleImage",
+
+    "os_type": "Linux",
+    "image_publisher": "Canonical",
+    "image_offer": "UbuntuServer",
+    "image_sku": "16.04-LTS",
+
+    "azure_tags": {
+        "dept": "Packer",
+        "task": "PackerImage"
+    },
+
+    "location": "East US",
+    "vm_size": "Standard_DS2_v2"
+  }],
+  "provisioners": [{
+    "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+    "inline": [
+      "echo > \"this is ansible linux Server\" > ~/AnsibleLinux.txt",
+      "apt-get update",
+      "apt-get upgrade -y",
+      "sudo apt install software-properties-common -y",
+      "sudo add-apt-repository --yes --update ppa:ansible/ansible -y",
+      "sudo apt install ansible -y",
+      "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+    ],
+    "inline_shebang": "/bin/sh -x",
+    "type": "shell"
+  }]
+}

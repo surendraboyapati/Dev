@@ -1,0 +1,53 @@
+- hosts: all
+  become: yes
+  tasks: 
+    - name: create new user nexus 
+      shell: useradd -m -p @123nexus nexus
+
+    - name: add privilages to the user nexus 
+      shell: echo "nexus ALL=(ALL) ALL" >> /etc/sudoers
+    
+    - name: add privilages to the user jenkins 
+      shell: echo "jenkins ALL=(ALL) ALL" >> /etc/sudoers
+
+    - name: install apache2
+      apt: name=apache2 update_cache=yes state=latest
+  
+    - name: install JDK
+      apt: name=default-jdk update_cache=yes state=latest
+
+    - name: Add jenkins apt key 
+      shell: wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
+  
+    - name: add debian package to sources list 
+      shell: 'sh -c "echo deb https://pkg.jenkins.io/debian binary/ > /etc/apt/sources.list.d/jenkins.list"'
+  
+    - name: install jenkins 
+      apt: name=jenkins update_cache=yes state=latest
+    - name: download nexus 
+      shell: wget https://sonatype-download.global.ssl.fastly.net/nexus/3/nexus-3.24.0-02-unix.tar.gz
+
+    - name: move nexus to /opt/
+      shell: mv nexus-3.24.0-02-unix.tar.gz /opt/
+
+
+    - name: extract nexus nexus-latest-bundle.tar.gz file 
+      shell:  sudo tar  -xvzf /opt/nexus-3.24.0-02-unix.tar.gz -C /opt/
+
+    - name: setup sonatype-work permissions 
+      shell: chown -R nexus:nexus /opt/sonatype-work
+  
+    - name: setup nexus permissions 
+      shell: chown -R nexus:nexus /opt/nexus*
+
+    - name: Add nexus as a service at boot time
+      shell: ln -s /opt/nexus/bin/nexus  /etc/init.d/nexus
+
+    - name: Rename the nexus file from nexusXXXX to nexus 
+      shell: mv /opt/nexus-3.24.0-02 /opt/nexus 
+
+    - name: update nexus rc file with nexus user(runner).  
+      shell: echo "run_as_user=\"nexus\"" > /opt/nexus/bin/nexus.rc
+    
+    - name: start nexus server  
+      shell: /etc/init.d/nexus start
